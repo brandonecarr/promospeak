@@ -17,7 +17,8 @@
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
     "supabase:status": "supabase status",
-    "email:dev": "email dev --dir src/emails --port 3001"
+    "email:dev": "email dev --dir src/emails --port 3001",
+    "grant-admin": "dotenv -e .env.local -- tsx scripts/grant-admin.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",

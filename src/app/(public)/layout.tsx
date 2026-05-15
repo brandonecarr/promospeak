@@ -1,5 +1,5 @@
 import { SiteChrome } from "@/components/shared/site-chrome";
 
-export default function MarketingLayout({ children }: { children: React.ReactNode }) {
+export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return <SiteChrome>{children}</SiteChrome>;
 }

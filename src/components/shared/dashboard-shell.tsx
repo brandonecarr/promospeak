@@ -1,13 +1,15 @@
 import Link from "next/link";
 import { brand } from "@/config/brand";
 import { site } from "@/config/site";
+import { getCurrentUser } from "@/lib/auth/roles";
+import { LogoutButton } from "@/components/auth/logout-button";
 
 export type DashboardNavItem = {
   href: string;
   label: string;
 };
 
-export function DashboardShell({
+export async function DashboardShell({
   navItems,
   surfaceLabel,
   children,
@@ -16,6 +18,7 @@ export function DashboardShell({
   surfaceLabel: string;
   children: React.ReactNode;
 }) {
+  const user = await getCurrentUser();
   return (
     <div className="flex min-h-screen">
       <aside className="hidden w-60 shrink-0 flex-col border-r bg-muted/30 md:flex">
@@ -38,6 +41,14 @@ export function DashboardShell({
             </Link>
           ))}
         </nav>
+        {user ? (
+          <div className="border-t p-3">
+            <p className="truncate px-3 pb-1 text-xs text-muted-foreground" title={user.email ?? ""}>
+              {user.email}
+            </p>
+            <LogoutButton />
+          </div>
+        ) : null}
       </aside>
       <main className="flex-1">
         <div className="container mx-auto max-w-6xl px-4 py-10">{children}</div>

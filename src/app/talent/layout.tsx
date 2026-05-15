@@ -1,5 +1,6 @@
 import { site } from "@/config/site";
 import { DashboardShell } from "@/components/shared/dashboard-shell";
+import { requireRole } from "@/lib/auth/roles";
 
 const navItems = [
   { href: site.routes.talent.root, label: "Overview" },
@@ -13,7 +14,8 @@ const navItems = [
   { href: site.routes.talent.settings, label: "Settings" },
 ];
 
-export default function TalentLayout({ children }: { children: React.ReactNode }) {
+export default async function TalentLayout({ children }: { children: React.ReactNode }) {
+  await requireRole(["ambassador", "admin"]);
   return (
     <DashboardShell navItems={navItems} surfaceLabel="Ambassador">
       {children}

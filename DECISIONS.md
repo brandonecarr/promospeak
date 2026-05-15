@@ -43,6 +43,24 @@ Running log of meaningful tradeoffs, per §14 of the brief. Each entry: what we 
 - Rejected: brief's `/a/` + `/m/`; default `/admin`.
 - Why: `/agency` + `/talent` reads better in URL bars and to non-internal users. `/ps-admin` is defense-in-depth on top of role-gated auth — the auth check is the boundary, the URL is just a speed bump for scanners.
 
+## 2026-05-15 — Slice 1: profile rows created by DB trigger, not app code
+- Picked: a `handle_new_user()` trigger on `auth.users` reads role + names from
+  `raw_user_meta_data` and inserts the matching profile row (agency + agency_members
+  OR ambassador). Signup is a single `supabase.auth.signUp()` call.
+- Rejected: server action does signUp, then does a second insert.
+- Why: keeps signup atomic and works for any source of new users (CLI, admin UI,
+  invited members). Tradeoff: failure modes are now in two places (Supabase
+  errors vs. trigger errors).
+
+## 2026-05-15 — Admin role lives in `app_metadata`, not `user_metadata`
+- Picked: admin promotion stamps `app_metadata.role = 'admin'` via the service
+  role client (`scripts/grant-admin.ts`).
+- Rejected: relying on `user_metadata` (which users can self-mutate via the
+  client) or a DB row check on every request.
+- Why: `app_metadata` is server-only and rides in the JWT, so `requireRole()`
+  can gate without a DB roundtrip. The `users.role` column is mirrored for
+  joins/queries but is not the auth boundary.
+
 ## 2026-05-14 — RLS-on-by-default
 - Picked: every public table is RLS-enabled at creation via `20260514120000_enable_rls.sql`. No policies added yet — policies land per vertical slice.
 - Why: matches brief §10 ("RLS on every Supabase table"). Default-deny is the safe state; per-slice policies grant access as features ship.
