@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { and, eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
-import { stripe } from "@/lib/stripe/client";
-import { serverEnv } from "@/config/env";
+import { stripe, stripeWebhookSecret } from "@/lib/stripe/client";
 import { plans, type PlanTier } from "@/config/pricing";
 
 export async function POST(request: Request) {
@@ -15,11 +14,7 @@ export async function POST(request: Request) {
 
   let event: Stripe.Event;
   try {
-    event = stripe().webhooks.constructEvent(
-      body,
-      signature,
-      serverEnv().STRIPE_WEBHOOK_SECRET,
-    );
+    event = stripe().webhooks.constructEvent(body, signature, stripeWebhookSecret());
   } catch (err) {
     return NextResponse.json(
       { error: `Bad signature: ${(err as Error).message}` },

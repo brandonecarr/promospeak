@@ -13,6 +13,9 @@ export async function POST(request: Request) {
   }
 
   const secret = process.env.STRIPE_IDENTITY_WEBHOOK_SECRET ?? serverEnv().STRIPE_WEBHOOK_SECRET;
+  if (!secret) {
+    return NextResponse.json({ error: "Stripe webhook not configured" }, { status: 503 });
+  }
   let event: Stripe.Event;
   try {
     event = stripe().webhooks.constructEvent(body, signature, secret);

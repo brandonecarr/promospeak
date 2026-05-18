@@ -6,7 +6,11 @@ let _resend: Resend | null = null;
 
 export function resend() {
   if (!_resend) {
-    _resend = new Resend(serverEnv().RESEND_API_KEY);
+    const key = serverEnv().RESEND_API_KEY;
+    if (!key) {
+      throw new Error("RESEND_API_KEY is not configured");
+    }
+    _resend = new Resend(key);
   }
   return _resend;
 }

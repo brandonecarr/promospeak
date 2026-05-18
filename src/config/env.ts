@@ -10,8 +10,10 @@ const serverEnvSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
   SUPABASE_JWT_SECRET: z.string().min(1).optional(),
 
-  STRIPE_SECRET_KEY: z.string().min(1),
-  STRIPE_WEBHOOK_SECRET: z.string().min(1),
+  // Optional at schema level so the site renders without Stripe configured.
+  // Factories in src/lib/stripe/client.ts throw a clear error if invoked.
+  STRIPE_SECRET_KEY: z.string().min(1).optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().min(1).optional(),
   STRIPE_PRICE_STARTER_MONTHLY: z.string().min(1).optional(),
   STRIPE_PRICE_STARTER_ANNUAL: z.string().min(1).optional(),
   STRIPE_PRICE_GROWTH_MONTHLY: z.string().min(1).optional(),
@@ -22,7 +24,8 @@ const serverEnvSchema = z.object({
   CHECKR_API_KEY: z.string().min(1).optional(),
   CHECKR_WEBHOOK_SECRET: z.string().min(1).optional(),
 
-  RESEND_API_KEY: z.string().min(1),
+  // Optional at schema level — resend() factory throws if invoked without it.
+  RESEND_API_KEY: z.string().min(1).optional(),
   RESEND_WEBHOOK_SECRET: z.string().min(1).optional(),
 
   OPENAI_API_KEY: z.string().min(1).optional(),
