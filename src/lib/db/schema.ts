@@ -196,7 +196,23 @@ export const subscriptions = pgTable("subscriptions", {
 });
 
 // Tables for later vertical slices — schema stubs only. Flesh out as slices land:
-// ambassador_media, bookings, reviews, forum_reactions, notifications, audit_log.
+// bookings, reviews, forum_reactions, notifications, audit_log.
+
+export const ambassadorMedia = pgTable("ambassador_media", {
+  id: id(),
+  ambassadorId: uuid("ambassador_id").notNull().references(() => ambassadors.id, {
+    onDelete: "cascade",
+  }),
+  type: text("type").notNull(), // "image" | "video"
+  url: text("url").notNull(),
+  thumbnailUrl: text("thumbnail_url"),
+  caption: text("caption"),
+  brandTag: text("brand_tag"),
+  roleTag: text("role_tag"),
+  year: integer("year"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: created(),
+});
 
 export const conversations = pgTable("conversations", {
   id: id(),

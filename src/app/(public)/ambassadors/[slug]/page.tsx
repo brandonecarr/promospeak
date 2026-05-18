@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPublicAmbassadorBySlug } from "@/server/queries/ambassadors";
+import { listMediaForAmbassador } from "@/server/queries/media";
+import { PortfolioGrid } from "@/components/talent/portfolio-grid";
 import { site } from "@/config/site";
 import { brand } from "@/config/brand";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +27,7 @@ export default async function PublicAmbassadorPage({ params }: Params) {
   const a = await getPublicAmbassadorBySlug(slug);
   if (!a) notFound();
 
+  const media = await listMediaForAmbassador(a.id);
   const location = [a.city, a.state].filter(Boolean).join(", ") || "Location TBD";
 
   return (
@@ -68,6 +71,15 @@ export default async function PublicAmbassadorPage({ params }: Params) {
         <Block label="Languages" items={a.languages} />
         <Block label="Skills" items={a.skills} />
       </section>
+
+      {media.length > 0 ? (
+        <section className="mt-10">
+          <h2 className="text-lg font-semibold tracking-tight">Portfolio</h2>
+          <div className="mt-4">
+            <PortfolioGrid media={media} />
+          </div>
+        </section>
+      ) : null}
 
       <section className="mt-8 rounded-lg border bg-card p-5">
         <dl className="grid gap-4 sm:grid-cols-3">
