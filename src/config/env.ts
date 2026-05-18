@@ -45,8 +45,12 @@ function parseServerEnv(): ServerEnv {
   }
   const parsed = serverEnvSchema.safeParse(process.env);
   if (!parsed.success) {
-    console.error("Invalid server environment variables:", parsed.error.flatten().fieldErrors);
-    throw new Error("Invalid server environment variables");
+    const fieldErrors = parsed.error.flatten().fieldErrors;
+    const summary = Object.entries(fieldErrors)
+      .map(([k, v]) => `${k}: ${(v as string[]).join("; ")}`)
+      .join(" | ");
+    console.error("Invalid server environment variables:", fieldErrors);
+    throw new Error(`Invalid server environment variables — ${summary}`);
   }
   return parsed.data;
 }
