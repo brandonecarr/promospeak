@@ -41,6 +41,12 @@ export default async function EditJobPage({ params }: Params) {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Link
+            href={`${site.routes.agency.jobs}/${job.id}/applicants`}
+            className={buttonVariants({ variant: "outline", size: "sm" })}
+          >
+            Applicants
+          </Link>
           {job.status === "draft" ? (
             <form action={transitionJobStatus}>
               <input type="hidden" name="jobId" value={job.id} />

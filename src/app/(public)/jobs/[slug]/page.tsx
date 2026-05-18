@@ -1,10 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPublicJobBySlug } from "@/server/queries/jobs";
+import { getCurrentUser } from "@/lib/auth/roles";
+import { getAmbassadorForUser } from "@/server/queries/profiles";
+import { findApplicationByJobAndAmbassador } from "@/server/queries/applications";
 import { brand } from "@/config/brand";
 import { site } from "@/config/site";
 import { buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ApplyForm } from "@/components/jobs/apply-form";
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -25,6 +29,21 @@ export default async function PublicJobDetailPage({ params }: Params) {
   const row = await getPublicJobBySlug(slug);
   if (!row) notFound();
   const { job, agency } = row;
+
+  const user = await getCurrentUser();
+  const role = (user?.user_metadata?.role ?? user?.app_metadata?.role) as
+    | "ambassador"
+    | "agency_member"
+    | "admin"
+    | undefined;
+  let existingApplicationStatus: string | null = null;
+  if (user && role === "ambassador") {
+    const ambassador = await getAmbassadorForUser(user.id);
+    if (ambassador) {
+      const existing = await findApplicationByJobAndAmbassador(job.id, ambassador.id);
+      existingApplicationStatus = existing?.status ?? null;
+    }
+  }
 
   return (
     <article className="container mx-auto max-w-3xl px-4 py-12">
@@ -80,20 +99,83 @@ export default async function PublicJobDetailPage({ params }: Params) {
         </section>
       ) : null}
 
+      <ApplyPanel
+        jobId={job.id}
+        jobSlug={job.slug}
+        user={user}
+        role={role}
+        existingStatus={existingApplicationStatus}
+      />
+    </article>
+  );
+}
+
+function ApplyPanel({
+  jobId,
+  jobSlug,
+  user,
+  role,
+  existingStatus,
+}: {
+  jobId: string;
+  jobSlug: string;
+  user: Awaited<ReturnType<typeof getCurrentUser>>;
+  role: string | undefined;
+  existingStatus: string | null;
+}) {
+  if (!user) {
+    return (
       <div className="mt-12 rounded-lg border bg-muted/30 p-6 text-center">
         <p className="text-sm text-muted-foreground">
           Apply through {brand.name} — free for {brand.copy.talentNounPlural}.
         </p>
         <Link
           href={`${site.routes.signup}?role=talent&next=${encodeURIComponent(
-            `${site.routes.publicJobs}/${job.slug}`,
+            `${site.routes.publicJobs}/${jobSlug}`,
           )}`}
           className={buttonVariants({ className: "mt-4" })}
         >
           Apply now
         </Link>
       </div>
-    </article>
+    );
+  }
+
+  if (role !== "ambassador") {
+    return (
+      <div className="mt-12 rounded-lg border bg-muted/30 p-6 text-center text-sm text-muted-foreground">
+        Only ambassador accounts can apply. Switch accounts or sign up as an ambassador to apply.
+      </div>
+    );
+  }
+
+  if (existingStatus) {
+    return (
+      <div className="mt-12 rounded-lg border bg-muted/30 p-6 text-center">
+        <p className="text-sm font-medium">
+          You&apos;ve already applied. Current status:{" "}
+          <span className="capitalize">{existingStatus.replace("_", " ")}</span>
+        </p>
+        <Link
+          href={site.routes.talent.applications}
+          className={buttonVariants({ variant: "outline", className: "mt-4" })}
+        >
+          See all your applications
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-12 rounded-lg border bg-card p-6">
+      <h2 className="text-lg font-semibold tracking-tight">Apply for this gig</h2>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Your profile goes with this application. Add a quick note to stand out.
+      </p>
+      <div className="mt-4">
+        <ApplyForm jobId={jobId} />
+      </div>
+    </div>
   );
 }
 

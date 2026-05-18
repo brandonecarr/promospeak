@@ -196,9 +196,33 @@ export const subscriptions = pgTable("subscriptions", {
 });
 
 // Tables for later vertical slices — schema stubs only. Flesh out as slices land:
-// ambassador_media, availability, bookings, reviews, conversations, messages,
-// forum_categories, forum_threads, forum_posts, forum_reactions, verifications,
-// notifications, audit_log.
+// ambassador_media, bookings, reviews, forum_reactions, notifications, audit_log.
+
+export const conversations = pgTable("conversations", {
+  id: id(),
+  agencyId: uuid("agency_id").notNull().references(() => agencies.id, { onDelete: "cascade" }),
+  ambassadorId: uuid("ambassador_id").notNull().references(() => ambassadors.id, {
+    onDelete: "cascade",
+  }),
+  applicationId: uuid("application_id").references(() => applications.id, {
+    onDelete: "set null",
+  }),
+  lastMessageAt: timestamp("last_message_at", { withTimezone: true }),
+  createdAt: created(),
+});
+
+export const messages = pgTable("messages", {
+  id: id(),
+  conversationId: uuid("conversation_id").notNull().references(() => conversations.id, {
+    onDelete: "cascade",
+  }),
+  senderUserId: uuid("sender_user_id").notNull().references(() => users.id, {
+    onDelete: "cascade",
+  }),
+  body: text("body").notNull(),
+  readAt: timestamp("read_at", { withTimezone: true }),
+  createdAt: created(),
+});
 
 export const verifications = pgTable("verifications", {
   id: id(),
