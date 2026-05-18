@@ -7,6 +7,12 @@ import { z } from "zod";
 import { db, schema } from "@/lib/db";
 import { requireRole } from "@/lib/auth/roles";
 import { getAgencyForUser, isAgencyOwnerOrAdmin } from "@/server/queries/profiles";
+import {
+  getAgencySubscription,
+  isSubscriptionActive,
+  planFor,
+} from "@/server/queries/subscriptions";
+import { countActiveJobsForAgency } from "@/server/queries/jobs";
 import { site } from "@/config/site";
 
 export type JobFormState =
@@ -54,6 +60,41 @@ export async function saveJob(
   }
 
   const jobId = formData.get("jobId");
+  const intent = formData.get("intent");
+
+  // Paywall: publishing (open) requires an active subscription within plan limits.
+  // Drafts are always allowed so an agency can stage a job before subscribing.
+  if (intent === "open") {
+    const sub = await getAgencySubscription(agencyRow.agency.id);
+    if (!isSubscriptionActive(sub)) {
+      return {
+        status: "error",
+        message: "Start a subscription on the billing page to publish jobs.",
+      };
+    }
+    const plan = planFor(sub);
+    if (plan && plan.limits.maxActiveJobs !== "unlimited") {
+      const isExistingOpen =
+        typeof jobId === "string" &&
+        jobId &&
+        (
+          await db
+            .select({ status: schema.jobs.status })
+            .from(schema.jobs)
+            .where(eq(schema.jobs.id, jobId))
+            .limit(1)
+        )[0]?.status === "open";
+      if (!isExistingOpen) {
+        const active = await countActiveJobsForAgency(agencyRow.agency.id);
+        if (active >= plan.limits.maxActiveJobs) {
+          return {
+            status: "error",
+            message: `Your ${plan.name} plan allows ${plan.limits.maxActiveJobs} active jobs. Close one or upgrade.`,
+          };
+        }
+      }
+    }
+  }
 
   const parsed = jobSchema.safeParse({
     title: formData.get("title"),

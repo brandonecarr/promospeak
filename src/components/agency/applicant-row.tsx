@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { transitionApplication } from "@/server/actions/applications";
 import { startConversation } from "@/server/actions/messages";
+import { requestBackgroundCheck } from "@/server/actions/verifications";
 
 type Ambassador = {
   id: string;
@@ -105,6 +106,15 @@ export function ApplicantRow({
           <Button size="sm" variant="outline" onClick={() => setOffering((s) => !s)}>
             {offering ? "Cancel offer" : "Offer"}
           </Button>
+        ) : null}
+        {["shortlisted", "offered"].includes(application.status) &&
+        !ambassador.backgroundCheckStatus ? (
+          <form action={requestBackgroundCheck}>
+            <input type="hidden" name="applicationId" value={application.id} />
+            <Button type="submit" size="sm" variant="outline">
+              Run background check
+            </Button>
+          </form>
         ) : null}
         {["shortlisted", "offered"].includes(application.status) ? (
           <ActionForm
